@@ -25,7 +25,9 @@ int generate(Vector2 map_size,
             int num_rooms, 
             Vector2 room_size);
 
-int boruvka(Room rooms[], int num_rooms);
+std::vector<Edge> boruvka(Room rooms[], int num_rooms);
+
+void do_a_star(int** dungeon, int rows, int cols, std::vector<Edge> edges);
 
 bool is_preferred_over(Edge uv, Edge wx);
 

@@ -85,7 +85,11 @@ int generate(Vector2 map_size,
     }
 
     // do boruvka
-    boruvka(rooms, num_rooms);
+    std::vector<Edge> edges = boruvka(rooms, num_rooms);
+
+    // do a*
+    do_a_star(dungeon, map_size.x, map_size.y, edges);
+
     
     // print dungeon
     print_dungeon(dungeon, map_size.x, map_size.y);
@@ -93,7 +97,7 @@ int generate(Vector2 map_size,
     
 }
 
-int boruvka(Room rooms[], int num_rooms) {
+std::vector<Edge> boruvka(Room rooms[], int num_rooms) {
     // create vertex array
     int n_vertices = 0;
     for (int i = 0; i < num_rooms; i++) {
@@ -281,7 +285,7 @@ int boruvka(Room rooms[], int num_rooms) {
         
     }
     std::cout << "Boruvka complete" <<std::endl;
-    return 0; 
+    return E; 
 }
 
 bool is_preferred_over(Edge uv, Edge wx) {
@@ -304,4 +308,22 @@ void print_dungeon(int** array, int rows, int cols) {
     }
     std::cout << std::endl;
   }
+}
+
+void do_a_star(int** dungeon, int rows, int cols, std::vector<Edge> edges) {
+    for (int i=0; i < (int) edges.size(); i++) {
+        Vector2 start = Vector2(edges[i].t.x, edges[i].t.y);
+        Vector2 end = Vector2(edges[i].f.x, edges[i].f.y);
+
+        while(start.x != end.x) {
+            if (start.x < end.x) {start.x++;}
+            else {start.x--;}
+            dungeon[start.x][start.y] = 1;
+        }
+        while(start.y != end.y) {
+            if (start.y < end.y) {start.y++;}
+            else {start.y--;}
+            dungeon[start.x][start.y] = 1;
+        }
+    }
 }
