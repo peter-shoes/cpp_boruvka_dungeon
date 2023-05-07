@@ -17,8 +17,14 @@ class Edge {
         }
 
         Edge(Vertex t, Vertex f) {
-            this->t = t;
-            this->f = f;
+            // lower id is always first
+            if (t.id > f.id) {
+                this->t = t;
+                this->f = f;
+            } else {
+                this->t = f;
+                this->f = t;
+            }
             this->weight = calc_weight();
         }
 

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <map>
 #include "Room.hpp"
 #include "Vertex.hpp"
 #include "Edge.hpp"

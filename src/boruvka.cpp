@@ -14,9 +14,9 @@ int main() {
     // // ask user for number of rooms
     // std::cout << "Enter number of rooms: ";
     // std::cin >> num_rooms;
-    size_x = 16;
-    size_y = 16;
-    num_rooms = 5;
+    size_x = 32;
+    size_y = 32;
+    num_rooms = 12;
     Vector2 map_size = Vector2(size_x, size_y);
     Vector2 room_size = Vector2(5, 5);
     // random seed
@@ -127,9 +127,80 @@ std::vector<Edge> boruvka(Room rooms[], int num_rooms) {
     // completed := false
     bool completed = false;
     // while not completed do
-    while(!completed) {       
+    while(!completed) {
+
+        // Assign each vertex it's component id
+        if (!completed and E.size() != 0) {
+            std::map<int, int> map;
+            for (int i=0; i < num_components; i++) {
+                map.insert(std::make_pair(i, -1));
+            }
+
+            // sort E by t id
+            std::sort(E.begin(), E.end(), [](const Edge& lhs, const Edge& rhs) {
+                return lhs.t.id < rhs.t.id;
+            });
+
+            for (int i=0; i < (int)E.size(); i++) {
+                map[E[i].t.id] = E[i].f.id;
+            }
+            // sort map by key
+            std::map<int, int>::iterator it = map.begin();
+            std::vector<int> keys;
+            std::vector<int> values;
+            while (it != map.end()) {
+                keys.push_back(it->first);
+                values.push_back(it->second);
+                it++;
+            }
+            std::sort(keys.begin(), keys.end());
+            std::sort(values.begin(), values.end());
+
+            // print map
+            for (int i=0; i < (int)keys.size(); i++) {
+                std::cout << keys[i] << " " << values[i] << std::endl;
+            }
+
+            bool done = false;
+            while (!done){
+                done = true;
+                for (int i=0; i<num_components; i++) {
+                    for (int j=0; j<n_vertices; j++) {
+                        if (i == vertices[j].id && map[i] != -1) {
+                            vertices[j].id = map[i];
+                            done = false;
+                        }
+                    }
+                }
+            }
+            // sort vertices by component id
+            std::sort(vertices, vertices+n_vertices, [](const Vertex& lhs, const Vertex& rhs) {
+                return lhs.id < rhs.id;
+            });
+            vector <int> v;
+            for (int i=0; i<n_vertices; i++) {
+                // check that vertex id is not already in v
+                bool in_v = false;
+                for (int j=0; j<(int)v.size(); j++) {
+                    if (vertices[i].id == v[j]) {
+                        in_v = true;
+                    }
+                }
+                if (!in_v) {
+                    v.push_back(vertices[i].id);
+                }
+            }
+            if ((int)v.size() == num_components) {
+                completed = true;
+                break;
+            }
+            else{
+                num_components = v.size();
+            }
+        }
 
         // Initialize the cheapest edge for each component to "None"
+        std::cout<<"num_components: "<<num_components<<"\n";
         Component components[num_components];
 
         // for each edge uv in E, where u and v are in different components of F:
@@ -162,6 +233,7 @@ std::vector<Edge> boruvka(Room rooms[], int num_rooms) {
         // completed := true
         completed = true;
         for (int i=0; i<num_components; i++) {
+            // std::cout<<components[i].cheapest_edge.weight<<std::endl;
             if (components[i].id == -1) {continue;}
             if (components[i].cheapest_edge.weight != -1) {
                 completed = false;
@@ -174,117 +246,10 @@ std::vector<Edge> boruvka(Room rooms[], int num_rooms) {
         // remove duplicate edges from E (if any)
         E.erase(std::unique(E.begin(), E.end()), E.end());
 
-        for (int i=0; i<(int)E.size(); i++) {E[i].print();}
-
-        if (!completed) {
-            // NOTE: we are moving this to the end for logical reasons
-            // Find the connected components of F and assign to each vertex its component
-
-            // create id pool
-            std::vector<std::vector<int>> pool;
-
-            for (int i=0; i < (int)E.size(); i++) {
-
-                std::cout<<"pool:"<<std::endl;
-                for (const auto& row : pool) { // Iterate over each row
-                    for (int num : row) { // Iterate over each element in the row
-                        std::cout << num << " ";
-                    }
-                    std::cout << std::endl;
-                }
-                std::cout << std::endl;
-
-                std::vector<int> sub_pool = {
-                    E[i].t.id,
-                    E[i].f.id
-                };
-                
-                // in the case that this is the first pass
-                if (pool.size() == 0) {
-                    pool.push_back(sub_pool);
-                    continue;
-                }
-
-                // otherwise get the intersection of each sub_pool
-                std::vector<int> intersection_idxs;
-                for (int j=0; j < (int)pool.size(); j++) {
-                    
-                    std::vector<int> intersection;
-                    std::sort(pool[j].begin(), pool[j].end());
-                    std::sort(sub_pool.begin(), sub_pool.end());
-                    
-                    // get the intersection
-                    std::set_intersection(
-                        pool[j].begin(), pool[j].end(), 
-                        sub_pool.begin(), sub_pool.end(), 
-                        std::back_inserter(intersection)
-                    );
-                    
-                    // if there is an intersection, mark the sub pool
-                    if (intersection.size() != 0) {intersection_idxs.push_back(j);}
-                    // otherwise add a new sub_pool
-                    else {pool.push_back(sub_pool);}
-                }
-                
-                // check the intersection indicies
-                if (intersection_idxs.size() > 0) {
-                    std::cout<<"intersection idxs: ";
-                    for (int num : intersection_idxs) {std::cout << num << " ";}std::cout << std::endl;
-                    // union sub_pool with the first hit
-                    std::vector<int> result(pool[intersection_idxs[0]].size() + sub_pool.size());
-                    auto it = std::set_union(
-                        pool[intersection_idxs[0]].begin(), pool[intersection_idxs[0]].end(), 
-                        sub_pool.begin(), sub_pool.end(), 
-                        result.begin());
-                    result.resize(it - result.begin());
-                    pool[intersection_idxs[0]] = result;
-                    if (intersection_idxs.size() == 1) {continue;}
-                    
-                    // union all subsequent hits with the first hit
-                    for(int j=1; j<(int)intersection_idxs.size(); j++) {
-
-                        std::vector<int> result1(pool[intersection_idxs[0]].size() + pool[j].size());
-
-                        auto it = std::set_union(
-                            pool[j].begin(), pool[j].end(), 
-                            pool[intersection_idxs[0]].begin(), pool[intersection_idxs[0]].end(), 
-                            result1.begin());
-                        result1.resize(it - result1.begin());
-
-                        pool[intersection_idxs[0]] = result1;
-                        std::vector<int> n;
-                        pool[intersection_idxs[j]] = n;
-                    }
-                }
-            }
-            // remove blank elements from pool
-            pool.erase(std::remove_if(pool.begin(), pool.end(), [](std::vector<int> i) {return i.size() == 0;}), pool.end());
-
-            // assign the component id to each vertex
-            for (int i=0; i < (int)pool.size(); i++) {
-                int new_id = (int)pool.size()+i;
-                for (int j=0; j < n_vertices; j++) {
-                    if (std::find(pool[i].begin(), pool[i].end(), vertices[j].id) != pool[i].end()) {
-                        vertices[j].id = new_id;
-                    }
-                }
-            }
-
-            // update the number of components
-            num_components = (int)pool.size();
-
-            std::cout<<"final pool:"<<std::endl;
-            for (const auto& row : pool) { // Iterate over each row
-                for (int num : row) { // Iterate over each element in the row
-                    std::cout << num << " ";
-                }
-                std::cout << std::endl;
-            }
-            // completed = true;
-        }
-        
     }
     std::cout << "Boruvka complete" <<std::endl;
+    for (int i=0; i<n_vertices; i++) {
+                vertices[i].print();}
     return E; 
 }
 
